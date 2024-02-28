@@ -18,3 +18,13 @@ smol_str = { version = "0.2.1", features = ["serde"] }
 tabled = "0.15.0"
 tracing = "0.1.40"
 zstd = "0.13.0"
+
+[profile.release]
+lto = "thin"
+
+[profile.bench]
+inherits = "release"
+debug = true
+
+[profile.dev]
+debug = true

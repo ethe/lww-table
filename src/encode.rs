@@ -95,15 +95,15 @@ impl<T: Hash + Eq + Clone> Register<T> {
 
 impl LwwDb {
     pub fn export_updates(&self, from: VectorClock) -> Vec<u8> {
-        let mut str_pool: Register<Arc<str>> = Register::new();
-        let mut peer_pool: Register<Peer> = Register::new();
+        let mut str_pool = Register::new();
+        let mut peer_pool = Register::new();
         let mut table_en = DeltaRleEncoder::new();
         let mut row_en = DeltaRleEncoder::new();
         let mut col_en = DeltaRleEncoder::new();
         let mut peer_en = DeltaRleEncoder::new();
         let mut lamport_en = DeltaRleEncoder::new();
         let deleted_v = Value::Deleted;
-        let mut values_en: Vec<&Value> = Vec::new();
+        let mut values_en = Vec::new();
         let mut updated_rows = FxHashSet::default();
         for (id, op) in self.oplog.iter_from(from.clone()) {
             debug_assert!(!from.includes(id));
@@ -261,10 +261,10 @@ impl LwwDb {
             Value::Deleted => match (row, col) {
                 (None, None) => self.delete_table_(table, Some(id)),
                 (Some(row), None) => self.delete_row_(table, row, Some(id)),
-                (Some(row), Some(col)) => self.set_(table, row, col, value, Some(id)),
+                (Some(row), Some(col)) => self.inner_set(table, row, col, value, Some(id)),
                 (None, Some(_)) => unreachable!(),
             },
-            _ => self.set_(table, row.unwrap(), col.unwrap(), value, Some(id)),
+            _ => self.inner_set(table, row.unwrap(), col.unwrap(), value, Some(id)),
         }
     }
 }
@@ -276,12 +276,12 @@ mod test_encode_from {
     #[test]
     fn test_basic() {
         let mut db = LwwDb::new();
-        db.set_("table", "a", "b", "value", None);
-        db.set_("table", "a", "c", "value", None);
-        db.set_("table", "a", "a", 123.0, None);
-        db.set_("table", "b", "a", 124.0, None);
-        db.set_("meta", "meta", "name", "Bob", None);
-        db.set_("meta", "meta", "Date", "2024/02/21", None);
+        db.inner_set("table", "a", "b", "value", None);
+        db.inner_set("table", "a", "c", "value", None);
+        db.inner_set("table", "a", "a", 123.0, None);
+        db.inner_set("table", "b", "a", 124.0, None);
+        db.inner_set("meta", "meta", "name", "Bob", None);
+        db.inner_set("meta", "meta", "Date", "2024/02/21", None);
         let data = db.export_updates(Default::default());
         let mut new_db = LwwDb::new();
         new_db.import_updates(&data);
@@ -325,12 +325,12 @@ mod test_encode_from {
     #[test]
     fn test_snapshot_basic() {
         let mut db = LwwDb::new();
-        db.set_("table", "a", "b", "value", None);
-        db.set_("table", "a", "c", "value", None);
-        db.set_("table", "a", "a", 123.0, None);
-        db.set_("table", "b", "a", 124.0, None);
-        db.set_("meta", "meta", "name", "Bob", None);
-        db.set_("meta", "meta", "Date", "2024/02/21", None);
+        db.inner_set("table", "a", "b", "value", None);
+        db.inner_set("table", "a", "c", "value", None);
+        db.inner_set("table", "a", "a", 123.0, None);
+        db.inner_set("table", "b", "a", 124.0, None);
+        db.inner_set("meta", "meta", "name", "Bob", None);
+        db.inner_set("meta", "meta", "Date", "2024/02/21", None);
         let data = db.export_snapshot();
         let mut new_db = LwwDb::from_snapshot(&data);
         println!("{}", &db);

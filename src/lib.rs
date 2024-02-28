@@ -102,29 +102,16 @@ impl LwwDb {
             .flatten()
     }
 
-    #[inline(always)]
     pub fn set(&mut self, table_str: &str, row: &str, col: &str, value: impl Into<Value>) {
-        self.set_(table_str, row, col, value.into(), None)
+        self.inner_set(table_str, row, col, value, None)
     }
 
-    #[inline(always)]
-    pub(crate) fn set_(
+    pub(crate) fn inner_set(
         &mut self,
         table_str: &str,
         row: &str,
         col: &str,
         value: impl Into<Value>,
-        id: Option<OpId>,
-    ) {
-        self.inner_set_(table_str, row, col, value.into(), id)
-    }
-
-    fn inner_set_(
-        &mut self,
-        table_str: &str,
-        row: &str,
-        col: &str,
-        value: Value,
         id: Option<OpId>,
     ) {
         let id = id.unwrap_or_else(|| self.next_id());
@@ -135,7 +122,7 @@ impl LwwDb {
             self.tables.get_mut(table_str).unwrap()
         };
 
-        if table.set(row, col, value, id) {
+        if table.set(row, col, value.into(), id) {
             self.oplog.record_update(id, table_str.into(), row.into())
         }
     }
